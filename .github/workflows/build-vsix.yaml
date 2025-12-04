@@ -1,0 +1,36 @@
+name: Build VSIX
+
+on:
+  push:
+    branches: [ main ]  # Или 'master', если у вас такая ветка. Можно добавить pull_request для тестирования.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # ОС для сборки (Linux — стандартная для Node.js).
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4  # Клонирует репозиторий.
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'  # Версия Node.js (20+ рекомендована для VS Code extensions).
+        cache: 'npm'  # Кэширует node_modules для ускорения.
+
+    - name: Install dependencies
+      run: |
+        npm ci  # Устанавливает зависимости (аналог npm install, но строже для CI).
+
+    - name: Compile TypeScript
+      run: npm run compile  # Или tsc -p ./ напрямую.
+
+    - name: Build VSIX
+      run: npx vsce package  # Используем npx, чтобы не устанавливать vsce глобально. Это создаст .vsix в корне.
+
+    - name: Upload VSIX as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: vscode-extension  # Имя артефакта.
+        path: '*.vsix'  # Загружает все .vsix-файлы.
+        retention-days: 30  # Хранит 30 дней (можно изменить).
